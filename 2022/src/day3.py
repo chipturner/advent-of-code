@@ -13,11 +13,21 @@ def priority(ch):
 
 def main() -> None:
     lines = helpers.read_input()
-    tot = 0
+    elf_teams = []
+    current_team = []
     for sack in lines:
-        c1, c2 = set(sack[: len(sack) // 2]), set(sack[len(sack) // 2 :])
-        v = [priority(ch) for ch in c1.intersection(c2)][0]
-        tot += v
+        if len(current_team) == 3:
+            elf_teams.append(current_team)
+            current_team = []
+        current_team.append(set(sack))
+    elf_teams.append(current_team)
+
+    tot = 0
+    for team in elf_teams:
+        common = team[0].intersection(team[1]).intersection(team[2])
+        print(common)
+        assert len(common) == 1
+        tot += priority(next(iter(common)))
     print(tot)
 
 
