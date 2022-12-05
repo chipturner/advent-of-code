@@ -1,4 +1,5 @@
 import sys
+import parse
 
 
 def parse_input():
@@ -21,9 +22,9 @@ def main() -> None:
         data[-1].reverse()
 
     for move in moves:
-        cmds = move.split()
-        assert cmds[0] == "move"
-        n, f, t = int(cmds[1]), int(cmds[3]) - 1, int(cmds[5]) - 1
+        result = parse.parse("move {n:d} from {f:d} to {t:d}", move)
+        assert result is not None
+        n, f, t = result["n"], result["f"] - 1, result["t"] - 1
         chunk = data[f][-n:]
         data[f][-n:] = []
         data[t].extend(chunk)
