@@ -33,10 +33,9 @@ def main() -> None:
         if not cmds or cmds[0] != 'move':
             continue
         n, f, t = int(cmds[1]), int(cmds[3]) - 1, int(cmds[5]) - 1
-        print(n, f, t)
-        for i in range(n):
-            ch = data[f].pop()
-            data[t].append(ch)
+        chunk = data[f][-n:]
+        data[f][-n:] = []
+        data[t].extend(chunk)
     pprint.pprint(data)
     print(''.join(data[i][-1] for i in range(9)))
             
