@@ -27,6 +27,18 @@ import platform
 import numpy
 import numpy.typing
 
+# iterate over an iterator yielding lists of `size`.  e.g.:
+# yield('abcdef', 3) -> [abc, bcd, cde, def]
+def window(it, size):
+    chunk = []
+    for v in it:
+        if len(chunk) == size:
+            yield chunk
+            chunk = chunk[1:]
+        chunk.append(v)
+    yield chunk
+
+
 # list of lines
 def read_input() -> List[str]:
     return list(l.strip() for l in fileinput.input())
@@ -52,10 +64,13 @@ def read_input_digit_grid(conv: Callable[[str], T]) -> numpy.typing.NDArray[T]:
     ret.setflags(write=False)
     return ret
 
+
 NumericGrid = numpy.typing.NDArray[numpy.int_]
+
 
 def most_common_byte(r: NumericGrid) -> int:
     return int(numpy.sum(r == 1) >= numpy.sum(r == 0))
+
 
 def neighbors(grid: NumericGrid, i: int, j: int) -> Iterable[Tuple[int, int]]:
     h, w = grid.shape
@@ -63,6 +78,7 @@ def neighbors(grid: NumericGrid, i: int, j: int) -> Iterable[Tuple[int, int]]:
         if pos[0] < 0 or pos[1] < 0 or pos[0] >= h or pos[1] >= w:
             continue
         yield pos
+
 
 def neighbors8(grid: NumericGrid, i: int, j: int) -> Iterable[Tuple[int, int]]:
     h, w = grid.shape
@@ -80,18 +96,19 @@ def neighbors8(grid: NumericGrid, i: int, j: int) -> Iterable[Tuple[int, int]]:
             continue
         yield pos
 
+
 def neighbors9_vals(grid: NumericGrid, i: int, j: int) -> int:
     h, w = grid.shape
     for pos in (
-            (i - 1, j - 1),
-            (i - 1, j),
-            (i - 1, j + 1),
-            (i, j - 1),
-            (i, j),
-            (i, j + 1),
-            (i + 1, j - 1),
-            (i + 1, j),
-            (i + 1, j + 1),
+        (i - 1, j - 1),
+        (i - 1, j),
+        (i - 1, j + 1),
+        (i, j - 1),
+        (i, j),
+        (i, j + 1),
+        (i + 1, j - 1),
+        (i + 1, j),
+        (i + 1, j + 1),
     ):
         if pos[0] < 0 or pos[1] < 0 or pos[0] >= h or pos[1] >= w:
             yield 0
@@ -131,6 +148,7 @@ def print_grid(g: Dict[Point, Any]) -> None:
 
 def write_grid(grid: Dict[Point, int], path: str) -> None:
     import PIL.Image, PIL.ImageDraw
+
     img_size = 3000
     min_i = min(p.x for p in grid.keys())
     max_i = max(p.x for p in grid.keys())
