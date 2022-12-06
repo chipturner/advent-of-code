@@ -27,18 +27,6 @@ import platform
 import numpy
 import numpy.typing
 
-# iterate over an iterator yielding lists of `size`.  e.g.:
-# yield('abcdef', 3) -> [abc, bcd, cde, def]
-def window(it, size):
-    chunk = []
-    for v in it:
-        if len(chunk) == size:
-            yield chunk
-            chunk = chunk[1:]
-        chunk.append(v)
-    yield chunk
-
-
 # list of lines
 def read_input() -> List[str]:
     return list(l.strip() for l in fileinput.input())
