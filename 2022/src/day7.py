@@ -13,10 +13,9 @@ class Dir:
         self.size = 0
         self.name = name
         self.parent = None
-        self.size = 0
 
     def __str__(self):
-        return f"Dir({self.name})"
+        return f"Dir({self.name}, tot={self.size})"
 
     def nice_print(self, indent=0):
         padding = '  ' * indent
@@ -78,5 +77,18 @@ def main() -> None:
             print(c)
             qual_size += c.size
     print(qual_size)
+
+    total = 70000000
+    need  = 30000000
+    unused = total - root.size
+
+    choices = []
+    for c in root.walk():
+        print('qq', unused + c.size, need, c)
+        if unused + c.size >= need:
+            choices.append(c)
+    print(choices)
+    choices.sort(key=lambda d: d.size)
+    print(choices[0])
 
 main()
