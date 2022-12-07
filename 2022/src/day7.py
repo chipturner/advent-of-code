@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import helpers
 
 from dataclasses import dataclass, field
@@ -8,9 +10,9 @@ from typing import List, Tuple, Optional, Iterator
 class Dir:
     name: str
     size: int = 0
-    children: List["Dir"] = field(default_factory=list, repr=False)
+    children: List[Dir] = field(default_factory=list, repr=False)
     files: List[Tuple[int, str]] = field(default_factory=list, repr=False)
-    parent: Optional["Dir"] = field(default=None, repr=False)
+    parent: Optional[Dir] = field(default=None, repr=False)
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -34,7 +36,7 @@ class Dir:
             size += d.size
         self.size = size
 
-    def walk(self) -> Iterator["Dir"]:
+    def walk(self) -> Iterator[Dir]:
         yield self
         for d in self.children:
             for c in d.walk():
