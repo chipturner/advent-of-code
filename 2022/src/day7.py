@@ -1,29 +1,31 @@
 import helpers
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List, Tuple, Optional, Iterator
 
 
 @dataclass
 class Dir:
-    def __init__(self, name):
+    name: str
+    size: int = 0
+    children: List["Dir"] = field(default_factory=list, repr=False)
+    files: List[Tuple[int, str]] = field(default_factory=list, repr=False)
+    parent: Optional["Dir"] = field(default=None, repr=False)
+
+    def __init__(self, name: str) -> None:
+        self.name = name
         self.children = []
         self.files = []
-        self.size = 0
-        self.name = name
-        self.parent = None
 
-    def __str__(self):
-        return f"Dir({self.name}, tot={self.size})"
-
-    def nice_print(self, indent=0):
+    def nice_print(self, indent: int = 0) -> None:
         padding = "  " * indent
-        print(f"{padding}Dir({self.name}, tot={self.size})")
+        print(f"{padding}{self}")
         for f in self.files:
-            print(f"{padding} {f}")
+            print(f"  {padding}{f}")
         for c in self.children:
-            c.nice_print(indent + 2)
+            c.nice_print(indent + 1)
 
-    def calc_size(self):
+    def calc_size(self) -> None:
         size = 0
         for f in self.files:
             size += f[0]
@@ -32,7 +34,7 @@ class Dir:
             size += d.size
         self.size = size
 
-    def walk(self):
+    def walk(self) -> Iterator["Dir"]:
         yield self
         for d in self.children:
             for c in d.walk():
@@ -53,14 +55,13 @@ def main() -> None:
                 if cmd[2] == "/":
                     cwd = root
                 elif cmd[2] == "..":
+                    assert cwd.parent is not None
                     cwd = cwd.parent
                 else:
-                    print(cmd, cwd)
                     cwd = list(d for d in cwd.children if d.name == cmd[2])[0]
             elif cmd[1] == "ls":
                 while lines and lines[0][0] != "$":
                     entry = lines.pop(0).split()
-                    print(entry)
                     if entry[0] == "dir":
                         newdir = Dir(entry[1])
                         newdir.parent = cwd
@@ -82,7 +83,6 @@ def main() -> None:
 
     choices = []
     for c in root.walk():
-        print("qq", unused + c.size, need, c)
         if unused + c.size >= need:
             choices.append(c)
     print(choices)
