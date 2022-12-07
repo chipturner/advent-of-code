@@ -3,14 +3,20 @@ from __future__ import annotations
 import helpers
 
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Iterator
+from typing import List, Optional, Iterator
+
+
+@dataclass(frozen=True)
+class FileEntry:
+    name: str
+    size: int
 
 
 @dataclass
 class Dir:
     name: str
     children: List[Dir] = field(default_factory=list, repr=False)
-    files: List[Tuple[int, str]] = field(default_factory=list, repr=False)
+    files: List[FileEntry] = field(default_factory=list, repr=False)
     parent: Optional[Dir] = field(default=None, repr=False)
 
     def nice_print(self, indent: int = 0) -> None:
@@ -22,7 +28,7 @@ class Dir:
             c.nice_print(indent + 1)
 
     def size(self) -> int:
-        size = sum(f[0] for f in self.files)
+        size = sum(f.size for f in self.files)
         for c in self.children:
             size += c.size()
         return size
@@ -60,7 +66,7 @@ def main() -> None:
                         newdir.parent = cwd
                         cwd.children.append(newdir)
                     else:
-                        cwd.files.append((int(entry[0]), entry[1]))
+                        cwd.files.append(FileEntry(entry[1], int(entry[0])))
     root.nice_print()
     qual_size = 0
     for c in root.walk():
@@ -79,7 +85,7 @@ def main() -> None:
             choices.append(c)
     print(choices)
     choices.sort(key=lambda d: d.size())
-    print(choices[0])
+    print(choices[0].size())
 
 
 main()
