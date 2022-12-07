@@ -14,11 +14,6 @@ class Dir:
     files: List[Tuple[int, str]] = field(default_factory=list, repr=False)
     parent: Optional[Dir] = field(default=None, repr=False)
 
-    def __init__(self, name: str) -> None:
-        self.name = name
-        self.children = []
-        self.files = []
-
     def nice_print(self, indent: int = 0) -> None:
         padding = "  " * indent
         print(f"{padding}{self}")
