@@ -18,6 +18,7 @@ from typing import (
     TypeVar,
     Callable,
     Iterable,
+    Iterator,
     Optional,
     TextIO,
 )
@@ -85,7 +86,7 @@ def neighbors8(grid: NumericGrid, i: int, j: int) -> Iterable[Tuple[int, int]]:
         yield pos
 
 
-def neighbors9_vals(grid: NumericGrid, i: int, j: int) -> int:
+def neighbors9_vals(grid: NumericGrid, i: int, j: int) -> Iterator[int]:
     h, w = grid.shape
     for pos in (
         (i - 1, j - 1),
