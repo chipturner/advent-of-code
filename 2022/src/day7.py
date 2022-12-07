@@ -9,7 +9,6 @@ from typing import List, Tuple, Optional, Iterator
 @dataclass
 class Dir:
     name: str
-    size: int = 0
     children: List[Dir] = field(default_factory=list, repr=False)
     files: List[Tuple[int, str]] = field(default_factory=list, repr=False)
     parent: Optional[Dir] = field(default=None, repr=False)
@@ -22,14 +21,11 @@ class Dir:
         for c in self.children:
             c.nice_print(indent + 1)
 
-    def calc_size(self) -> None:
-        size = 0
-        for f in self.files:
-            size += f[0]
-        for d in self.children:
-            d.calc_size()
-            size += d.size
-        self.size = size
+    def size(self) -> int:
+        size = sum(f[0] for f in self.files)
+        for c in self.children:
+            size += c.size()
+        return size
 
     def walk(self) -> Iterator[Dir]:
         yield self
@@ -65,25 +61,24 @@ def main() -> None:
                         cwd.children.append(newdir)
                     else:
                         cwd.files.append((int(entry[0]), entry[1]))
-    root.calc_size()
     root.nice_print()
     qual_size = 0
     for c in root.walk():
-        if c.size <= 100000:
+        if c.size() <= 100000:
             print(c)
-            qual_size += c.size
+            qual_size += c.size()
     print(qual_size)
 
     total = 70000000
     need = 30000000
-    unused = total - root.size
+    unused = total - root.size()
 
     choices = []
     for c in root.walk():
-        if unused + c.size >= need:
+        if unused + c.size() >= need:
             choices.append(c)
     print(choices)
-    choices.sort(key=lambda d: d.size)
+    choices.sort(key=lambda d: d.size())
     print(choices[0])
 
 
