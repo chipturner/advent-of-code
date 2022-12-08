@@ -105,6 +105,18 @@ def neighbors9_vals(grid: NumericGrid, i: int, j: int) -> Iterator[int]:
             yield grid[pos]
 
 
+def grid_line(
+    grid: NumericGrid, i: int, j: int, step: Tuple[int, int]
+) -> Iterator[int]:
+    h, w = grid.shape
+    while True:
+        i += step[0]
+        j += step[1]
+        if i < 0 or i >= h or j < 0 or j >= w:
+            break
+        yield grid[i][j]
+
+
 # Goofy replacement since cmp was removed in python3 (!)
 def cmp(a: int, b: int) -> int:
     return (a > b) - (a < b)

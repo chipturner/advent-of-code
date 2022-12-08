@@ -2,28 +2,11 @@ from __future__ import annotations
 
 import helpers
 
-import itertools
-import collections
+from typing import Iterable
+import numpy
 
-def vslice(grid, row, col):
-    ret = [[], []]
-    for j in range(len(grid[row])):
-        if j < col:
-            ret[0].append(grid[row][j])
-        elif j > col:
-            ret[1].append(grid[row][j])
-    return ret
 
-def hslice(grid, row, col):
-    ret = [[], []]
-    for j in range(len(grid[row])):
-        if j < row:
-            ret[0].append(grid[j][col])
-        elif j > row:
-            ret[1].append(grid[j][col])
-    return ret
-
-def calc_score(val, seq):
+def calc_score(val: int, seq: Iterable[int]) -> int:
     ret = 0
     for s in seq:
         ret += 1
@@ -31,20 +14,23 @@ def calc_score(val, seq):
             break
     return ret
 
+
 def main() -> None:
-    lines = helpers.read_input_digit_grid(int)
+    lines = helpers.read_input_digit_grid(numpy.int_)
     print(lines)
 
     for row in range(len(lines)):
         for col in range(len(lines[0])):
-            vs1, vs2 = vslice(lines, row, col)
-            vs1.reverse()
-            hs1, hs2 = hslice(lines, row, col)
-            hs1.reverse()
-            score = calc_score(lines[row][col], vs1)
-            score *= calc_score(lines[row][col], vs2)
-            score *= calc_score(lines[row][col], hs1)
-            score *= calc_score(lines[row][col], hs2)
+            right = helpers.grid_line(lines, row, col, (1, 0))
+            left = helpers.grid_line(lines, row, col, (-1, 0))
+            up = helpers.grid_line(lines, row, col, (0, 1))
+            down = helpers.grid_line(lines, row, col, (0, -1))
+
+            score = calc_score(lines[row][col], right)
+            score *= calc_score(lines[row][col], left)
+            score *= calc_score(lines[row][col], up)
+            score *= calc_score(lines[row][col], down)
             print(row, col, score)
-            
+
+
 main()
