@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import numpy
-
 import helpers
+from helpers import Point
 
 import itertools
 import collections
 
 
-def calc_t_pos(h_pos, t_pos):
-    dist = numpy.linalg.norm(h_pos - t_pos)
+def calc_t_pos(h_pos: Point, t_pos: Point) -> Point:
+    dist = (h_pos - t_pos).magnitude()
     if dist < 2:
         return t_pos
-    delta = numpy.sign(h_pos - t_pos)
+    delta = (h_pos - t_pos).sign()
     return t_pos + delta
 
 
@@ -21,14 +20,13 @@ def main() -> None:
     print(lines)
 
     deltas = {
-        "U": numpy.array((0, 1)),
-        "D": numpy.array((0, -1)),
-        "L": numpy.array((-1, 0)),
-        "R": numpy.array((1, 0)),
+        "U": Point(0, 1),
+        "D": Point(0, -1),
+        "L": Point(-1, 0),
+        "R": Point(1, 0),
     }
 
-    origin = numpy.array((0, 0))
-    origin.flags["WRITEABLE"] = False
+    origin = Point(0, 0)
     positions = [origin]
 
     tail_9_visited = set()
@@ -40,7 +38,7 @@ def main() -> None:
             for idx in range(1, len(positions)):
                 positions[idx] = calc_t_pos(positions[idx - 1], positions[idx])
             if len(positions) == 10:
-                tail_9_visited.add(tuple(positions[-1]))
+                tail_9_visited.add(positions[-1])
     print(len(tail_9_visited))
 
 

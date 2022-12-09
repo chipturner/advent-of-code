@@ -6,6 +6,7 @@ from enum import Enum
 import io
 import functools
 import fileinput
+import math
 import operator
 from dataclasses import dataclass
 
@@ -131,9 +132,17 @@ class Point:
     def from_str(s: str) -> Point:
         return Point(*map(int, s.split(",")))
 
-    def __add__(self, other: Tuple[int, int]) -> Point:
-        x, y = other
-        return Point(self.x + x, self.y + y)
+    def __add__(self, other: Point) -> Point:
+        return Point(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other: Point) -> Point:
+        return Point(self.x - other.x, self.y - other.y)
+
+    def magnitude(self) -> float:
+        return math.sqrt(self.x**2 + self.y**2)
+
+    def sign(self) -> Point:
+        return Point(numpy.sign(self.x), numpy.sign(self.y))
 
 
 def print_grid(g: Dict[Point, Any]) -> None:
