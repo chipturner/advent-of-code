@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import heapq
 import helpers
 import sys
 
@@ -13,26 +14,15 @@ def height_diff(c1, c2):
     return ord(c2) - ord(c1)
 
 
-def closest(g):
-    min_dist = sys.maxsize
-    min_node = None
-    for n, dist in g.items():
-        if dist < min_dist:
-            min_dist = dist
-            min_node = n
-    return min_node
-
-
 def main() -> None:
     grid = helpers.read_input_digit_grid(str)
     starting_spots = []
-    end = None, None
+    nodes = set()
     edges = collections.defaultdict(list)
-    prev = {}
 
     for i in range(len(grid)):
         for j in range(len(grid[0])):
-            prev[(i, j)] = None
+            nodes.add((i, j))
 
             if grid[i, j] == "S" or grid[i, j] == "a":
                 starting_spots.append((i, j))
@@ -42,24 +32,28 @@ def main() -> None:
                 if height_diff(grid[i, j], grid[neighbor]) < 2:
                     edges[(i, j)].append(neighbor)
 
-    print(len(starting_spots))
+    answers = []
     for start in starting_spots:
-        distances = {}
-        for n in prev:
-            distances[n] = sys.maxsize
+        horizon = []
+        heapq.heappush(horizon, (0, start))
+
+        distances = collections.defaultdict(lambda: sys.maxsize)
         distances[start] = 0
-        unvisited = distances.copy()
 
-        while (u := closest(unvisited)) != None:
-            del unvisited[u]
-
+        while horizon and (dist_u := heapq.heappop(horizon)):
+            dist, u = dist_u
+            if u == end:
+                answers.append((dist, start))
+                break
+            if distances[u] < dist:
+                continue
             for neighbor in edges[u]:
                 dist = distances[u] + 1
                 if dist < distances[neighbor]:
+                    heapq.heappush(horizon, (dist, neighbor))
                     distances[neighbor] = dist
-                    prev[neighbor] = u
-                    unvisited[neighbor] = dist
-        print(start, distances[end])
+
+    print(sorted(answers)[0][0])
 
 
 main()
