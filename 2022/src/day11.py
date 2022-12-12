@@ -1,26 +1,26 @@
 from __future__ import annotations
 
 import sys
-import parse
+import re
 import math
 
 from typing import List
 
 from dataclasses import dataclass
 
-monkey_fmt = r"""Monkey {num}:
-  Starting items: {items}
-  Operation: new = {operation}
-  Test: divisible by {divisor}
-    If true: throw to monkey {target_true}
-    If false: throw to monkey {target_false}
+monkey_fmt = r"""Monkey (?P<num>\d+):
+  Starting items: (?P<items>.*)
+  Operation: new = (?P<operation>.*)
+  Test: divisible by (?P<divisor>\d+)
+    If true: throw to monkey (?P<target_true>\d+)
+    If false: throw to monkey (?P<target_false>\d+)
 """.strip()
+monkey_re = re.compile(monkey_fmt, re.MULTILINE)
 
 
 @dataclass
 class Monkey:
     number: int
-    worry_level: int
     operation: str
     divisor: int
     items: List[int]
@@ -31,14 +31,13 @@ class Monkey:
 
 def main() -> None:
     input_monkeys = sys.stdin.read()
-    monkey_chunks = input_monkeys.split("\n\n")
+    results = monkey_re.finditer(input_monkeys.strip())
 
     monkeys = []
-    for chunk in monkey_chunks:
-        result = parse.parse(monkey_fmt, chunk.strip())
+    for result in results:
+        print(result)
         monkey = Monkey(
             int(result["num"]),
-            0,
             result["operation"],
             int(result["divisor"]),
             list(int(v) for v in result["items"].split(", ")),
