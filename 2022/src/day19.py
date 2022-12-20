@@ -36,32 +36,26 @@ class State:
         ret.exclusions = self.exclusions.copy()
         return ret
 
-    def calc_build_time(self, robot_costs, robot_type):
-        robot_build_time = -1
-        for ingredient, cost in robot_costs[robot_type].items():
-            if cost == 0:
-                continue
-            if self.robots[ingredient] == 0:
-                return None
-            cycles, remainder = divmod(robot_costs[robot_type][ingredient] - self.assets[ingredient], self.robots[ingredient])
-            cycles = max(0, cycles)
-            if remainder:
-                cycles += 1
-            robot_build_time = max(cycles, robot_build_time)
-        assert robot_build_time >= 0
-        print('calc_build_time', robot_type, '->', robot_build_time)
-        return robot_build_time
-
     def tick(self):
         for ingredient in ASSETS:
             self.assets[ingredient] += self.robots[ingredient]
         self.current_tick += 1
 
-    def build(self, costs, robot_type):
+    def build_towards(self, costs, robot_type):
+        if self.current_tick == 24:
+            return True
+        
+        for ingredient in costs:
+            if self.assets[ingredient] < costs[robot_type][ingredient]:
+                return False
+
         for ingredient in costs:
             self.assets[ingredient] -= costs[robot_type][ingredient]
             assert self.assets[ingredient] >= 0, f'{robot_type} {ingredient} {self}'
+
         self.robots[robot_type] += 1
+
+        return True
 
 best_so_far = 0
 @dataclass
@@ -91,20 +85,13 @@ class Blueprint:
 
             if self.useless_to_build(state, next_build):
                 continue
-            build_ticks = state.calc_build_time(self.robot_costs, next_build)
-            if build_ticks is None:
-                continue
 
-            for _ in range(build_ticks):
-                if state.current_tick > 24:
-                    break
+            while state.build_towards(self.robot_costs, next_build):
                 state.tick()
+            state.tick()
 
-            if state.current_tick > 24:
-                continue
-
-            state.build(self.robot_costs, next_build)
-            ret.extend(self.go(state, path + [ (next_build, state.current_tick) ]))
+            if state.current_tick <= 24:
+                ret.extend(self.go(state, path + [ (next_build, state.current_tick) ]))
         return ret
 
 def main() -> None:
