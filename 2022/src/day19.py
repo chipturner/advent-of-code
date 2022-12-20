@@ -65,6 +65,10 @@ class Blueprint:
     max_asset_use_per_turn: dict = field(default_factory=empty_asset_dict)
 
     def useless_to_build(self, state, candidate):
+        for ingredient, cost in self.robot_costs[candidate].items():
+            if cost > 0 and state.robots[ingredient] == 0:
+                return True
+
         if candidate == 'geodes':
             return False
 
