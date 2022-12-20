@@ -4,6 +4,7 @@ import helpers
 
 import itertools
 import collections
+import sys
 
 from dataclasses import dataclass, field, replace
 import re
@@ -12,11 +13,15 @@ bp_re = re.compile(r'Blueprint (\d+): Each ore robot costs (\d+) ore. Each clay 
 
 ASSETS = [ 'geodes', 'ore', 'clay', 'obsidian' ]
 
+def empty_asset_dict():
+    return { asset: 0 for asset in ASSETS }    
+
 @dataclass
 class State:
-    assets: dict = field(default_factory=lambda: { asset: 0 for asset in ASSETS })
-    robots: dict = field(default_factory=lambda: { asset: 0 for asset in ASSETS })
+    assets: dict = field(default_factory=empty_asset_dict)
+    robots: dict = field(default_factory=empty_asset_dict)
     cracked_geodes: int = 0
+    current_tick: int = 1
 
     def __post_init__(self):
         self.robots['ore'] = 1
@@ -25,73 +30,75 @@ class State:
         ret = State()
         ret.assets = self.assets.copy()
         ret.robots = self.robots.copy()
+        ret.current_tick = self.current_tick
+        ret.cracked_geodes = self.cracked_geodes
         return ret
 
-    def max_possible_geodes(self, turns_left):
-        ret = self.assets['geodes']
-        crackers = self.robots['geodes'] + 1
-        for i in range(turns_left):
-            ret += crackers
-            crackers += 1
-        return ret
+    def calc_build_time(self, robot_costs, robot_type):
+        robot_build_time = -1
+        for ingredient, cost in robot_costs[robot_type].items():
+            if cost == 0:
+                continue
+            if self.robots[ingredient] == 0:
+                return None
+                
+            needed_ticks = max(0, (robot_costs[robot_type][ingredient] - self.assets[ingredient])) // self.robots[ingredient]
+            robot_build_time = max(needed_ticks, robot_build_time)
+        assert robot_build_time >= 0
+        return robot_build_time
+
+    def tick(self):
+        for ingredient in ASSETS:
+            self.assets[ingredient] += self.robots[ingredient]
+        self.current_tick += 1
+
+    def build(self, costs, robot_type):
+        for ingredient in costs:
+            self.assets[ingredient] -= costs[robot_type][ingredient]
+        self.robots[robot_type] += 1
 
 best_so_far = 0
 @dataclass
 class Blueprint:
     num: int
-    robot_costs: dict
-    max_asset_use_per_turn: dict
-    
-    def __init__(self, num):
-        self.num = num
-        self.robot_costs = { }
-        self.max_asset_use_per_turn = {}
+    robot_costs: dict = field(default_factory=empty_asset_dict)
+    max_asset_use_per_turn: dict = field(default_factory=empty_asset_dict)
 
+    def useless_to_build(self, state, candidate):
+        if candidate == 'geodes':
+            return False
+
+        remaining = 24 - state.current_tick
+        if state.robots[candidate] * remaining + state.assets[candidate] >= remaining * self.max_asset_use_per_turn[candidate]:
+            return True
+
+        return False
+
+    
     def go(self, current_state, path):
-        current_state = current_state.copy()
+        if current_state.current_tick >= 24:
+            print('tick', current_state.current_tick, 'path:', path, current_state.assets['geodes'])
 
-        turns_left = 24 - len(path)
-        print('path:', len(path), path)
-        if turns_left == 0:
-            print('completed geodes:', current_state.assets['geodes'])
-            return [ current_state ]
+        ret = [ ]
+        for next_build in ASSETS:
+            state = current_state.copy()
+            state.tick()
 
-        global best_so_far
-        if best_so_far > current_state.max_possible_geodes(turns_left):
-            print('pruning bad outcome', path)
-            return [ current_state ]
-        else:
-            print('max possible geodes', current_state.max_possible_geodes(turns_left))
-
-        for asset in ASSETS:
-            current_state.assets[asset] += current_state.robots[asset]
-
-        end_states = []
-
-        for new_robot in ASSETS:
-            #print('considering', len(path), new_robot)
-            robot_costs = self.robot_costs[new_robot]
-            if new_robot != 'geodes' and current_state.robots[new_robot] >= self.max_asset_use_per_turn[new_robot]:
-                print('never need to make more', new_robot, current_state.robots[new_robot], self.max_asset_use_per_turn[new_robot])
+            if self.useless_to_build(state, next_build):
                 continue
-            for ore in robot_costs:
-                if current_state.assets[ore] < robot_costs[ore]:
-                    #print('nope', new_robot, current_state.assets[ore], robot_costs[ore])
-                    break
-            else:
-                new_state = current_state.copy()
-                #print('yep', new_robot, new_state.assets[ore], robot_costs[ore])
-                for ore, cost in robot_costs.items():
-                    new_state.assets[ore] -= cost
-                new_state.robots[new_robot] += 1
-                if new_state.assets['geodes'] > best_so_far:
-                    best_so_far = new_state.assets['geodes']
-                    print('new best:', best_so_far)
-                end_states.extend(self.go(new_state, path + [ new_robot ]))
-        end_states.extend(self.go(current_state.copy(), path + ['wait']))
-        return end_states
-                
-    
+            build_ticks = state.calc_build_time(self.robot_costs, next_build)
+            if build_ticks is None:
+                continue
+
+            for _ in range(build_ticks):
+                state.tick()
+
+            if state.current_tick > 24:
+                continue
+
+            state.build(self.robot_costs, next_build)
+            ret.extend(self.go(state, path + [ (next_build, state.current_tick) ]))
+        return ret
 
 def main() -> None:
     lines = helpers.read_input()
@@ -101,17 +108,17 @@ def main() -> None:
         assert (m := bp_re.match(line)) != None
         num, ore_robot_cost_ore, clay_robot_cost_ore, obsidian_cost_ore, obsidian_cost_clay, geode_cost_ore, geode_cost_obsidian = [ int(v) for v in m.groups()]
         bp = Blueprint(num)
-        bp.robot_costs['ore'] = { 'ore': ore_robot_cost_ore }
-        bp.robot_costs['clay'] = { 'ore': clay_robot_cost_ore }
-        bp.robot_costs['obsidian'] = { 'ore': obsidian_cost_ore, 'clay': obsidian_cost_clay }
-        bp.robot_costs['geodes'] = { 'ore': geode_cost_ore, 'obsidian': geode_cost_obsidian }
+        bp.robot_costs['ore'] = empty_asset_dict() | { 'ore': ore_robot_cost_ore }
+        bp.robot_costs['clay'] = empty_asset_dict() | { 'ore': clay_robot_cost_ore }
+        bp.robot_costs['obsidian'] = empty_asset_dict() | { 'ore': obsidian_cost_ore, 'clay': obsidian_cost_clay }
+        bp.robot_costs['geodes'] = empty_asset_dict() | { 'ore': geode_cost_ore, 'obsidian': geode_cost_obsidian }
         for asset in ASSETS:
             bp.max_asset_use_per_turn[asset] = max(v.get(asset, 0) for k, v in bp.robot_costs.items())
         blueprints.append(bp)
 
     for bp in blueprints:
         state = State()
-        print('Blueprint', bp.num, bp.go(state, ['wait']))
+        print('Blueprint', bp.num, bp.go(state, [('begin', 0)]))
 
 
 main()
