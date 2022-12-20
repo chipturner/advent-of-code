@@ -20,6 +20,7 @@ def empty_asset_dict():
 class State:
     assets: dict = field(default_factory=empty_asset_dict)
     robots: dict = field(default_factory=empty_asset_dict)
+    exclusions: set = field(default_factory=set)
     cracked_geodes: int = 0
     current_tick: int = 1
 
@@ -32,6 +33,7 @@ class State:
         ret.robots = self.robots.copy()
         ret.current_tick = self.current_tick
         ret.cracked_geodes = self.cracked_geodes
+        ret.exclusions = self.exclusions.copy()
         return ret
 
     def calc_build_time(self, robot_costs, robot_type):
@@ -41,10 +43,13 @@ class State:
                 continue
             if self.robots[ingredient] == 0:
                 return None
-                
-            needed_ticks = max(0, (robot_costs[robot_type][ingredient] - self.assets[ingredient])) // self.robots[ingredient]
-            robot_build_time = max(needed_ticks, robot_build_time)
+            cycles, remainder = divmod(robot_costs[robot_type][ingredient] - self.assets[ingredient], self.robots[ingredient])
+            cycles = max(0, cycles)
+            if remainder:
+                cycles += 1
+            robot_build_time = max(cycles, robot_build_time)
         assert robot_build_time >= 0
+        print('calc_build_time', robot_type, '->', robot_build_time)
         return robot_build_time
 
     def tick(self):
@@ -55,6 +60,7 @@ class State:
     def build(self, costs, robot_type):
         for ingredient in costs:
             self.assets[ingredient] -= costs[robot_type][ingredient]
+            assert self.assets[ingredient] >= 0, f'{robot_type} {ingredient} {self}'
         self.robots[robot_type] += 1
 
 best_so_far = 0
@@ -77,12 +83,11 @@ class Blueprint:
     
     def go(self, current_state, path):
         if current_state.current_tick >= 24:
-            print('tick', current_state.current_tick, 'path:', path, current_state.assets['geodes'])
+            print('bp', self.num, 'tick', current_state.current_tick, 'path:', path, current_state.assets, current_state.assets['geodes'])
 
         ret = [ ]
         for next_build in ASSETS:
             state = current_state.copy()
-            state.tick()
 
             if self.useless_to_build(state, next_build):
                 continue
@@ -91,6 +96,8 @@ class Blueprint:
                 continue
 
             for _ in range(build_ticks):
+                if state.current_tick > 24:
+                    break
                 state.tick()
 
             if state.current_tick > 24:
