@@ -41,17 +41,21 @@ class State:
             self.assets[ingredient] += self.robots[ingredient]
         self.current_tick += 1
 
-    def build_towards(self, costs, robot_type):
-        if self.current_tick == 24:
-            return True
-        
-        for ingredient in costs:
-            if self.assets[ingredient] < costs[robot_type][ingredient]:
-                return False
+    def calc_build_time(self, costs, robot_type):
+        ret = 0
+        for ingredient, cost in costs.items():
+            if cost == 0:
+                continue
+            assert self.robots[ingredient] > 0, f'{ingredient} {self.robots[ingredient]}'
+            needed = cost - self.assets[ingredient]
+            if needed > 0:
+                ret = max(ret, needed // self.robots[ingredient] + (needed % self.robots[ingredient] > 0))
+        return ret
 
-        for ingredient in costs:
-            self.assets[ingredient] -= costs[robot_type][ingredient]
-            assert self.assets[ingredient] >= 0, f'{robot_type} {ingredient} {self}'
+    def build(self, costs, robot_type):
+        for ingredient, cost in costs.items():
+            assert self.assets[ingredient] >= cost, f'{self.assets[ingredient]} {cost}'
+            self.assets[ingredient] -= cost
 
         self.robots[robot_type] += 1
 
@@ -64,7 +68,7 @@ class Blueprint:
     robot_costs: dict = field(default_factory=empty_asset_dict)
     max_asset_use_per_turn: dict = field(default_factory=empty_asset_dict)
 
-    def useless_to_build(self, state, candidate):
+    def useless_to_consider(self, state, candidate):
         for ingredient, cost in self.robot_costs[candidate].items():
             if cost > 0 and state.robots[ingredient] == 0:
                 return True
@@ -87,12 +91,13 @@ class Blueprint:
         for next_build in ASSETS:
             state = current_state.copy()
 
-            if self.useless_to_build(state, next_build):
+            if self.useless_to_consider(state, next_build):
                 continue
 
-            while state.build_towards(self.robot_costs, next_build):
+            ticks_to_build = state.calc_build_time(self.robot_costs[next_build], next_build);
+            for _ in range(ticks_to_build):
                 state.tick()
-            state.tick()
+            state.build(self.robot_costs[next_build], next_build)
 
             if state.current_tick <= 24:
                 ret.extend(self.go(state, path + [ (next_build, state.current_tick) ]))
@@ -116,7 +121,7 @@ def main() -> None:
 
     for bp in blueprints:
         state = State()
-        print('Blueprint', bp.num, bp.go(state, [('begin', 0)]))
+        print('Blueprint', bp.num, bp.go(state, []))
 
 
 main()
