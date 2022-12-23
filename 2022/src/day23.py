@@ -46,10 +46,10 @@ def main() -> None:
         )
 
     round = 1
-    while round <= 10:
+    while True:
         print()
         print("round", round)
-        helpers.print_grid(grid)
+        # helpers.print_grid(grid)
         print()
         proposals = collections.defaultdict(list)
         for pt, val in grid.items():
@@ -71,6 +71,9 @@ def main() -> None:
                 proposer = proposers[0]
                 removes.add(proposer)
                 moves[pt] = "#"
+        if len(moves) == 0:
+            print('No moves at round', round)
+            break
 
         c = grid.copy()
         c.update(moves)
