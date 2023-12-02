@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import helpers
 
+import re
 import itertools
 import collections
 
@@ -21,9 +22,8 @@ def main() -> None:
         nope = False
         bag = color()
         for r in x:
-            elems = r.split()
             elems = color(
-                **dict([r[::-1] for r in zip(map(int, elems[::2]), elems[1::2])])
+                **{pair[1]: int(pair[0]) for pair in re.findall(r"(\d+) (\w+)", r)}
             )
             bag = color(
                 red=max(elems.red, bag.red),
