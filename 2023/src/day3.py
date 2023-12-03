@@ -7,8 +7,9 @@ import collections
 import re
 import numpy
 
+
 def num_start(grid, x, y):
-    ret = ''
+    ret = ""
     first = x
     if grid[x, y].isdigit():
         i = x - 1
@@ -23,6 +24,7 @@ def num_start(grid, x, y):
             i += 1
     return (first, ret)
 
+
 def main() -> None:
     lines = helpers.read_input()
     g = numpy.array([list(l) for l in lines]).transpose()
@@ -30,18 +32,23 @@ def main() -> None:
 
     sigils = set()
     seen_starts = set()
+    gears = {}
     for x in range(g.shape[0]):
         for y in range(g.shape[1]):
-            if g[x, y] not in list('.1234567890'):
+            if g[x, y] == "*":
                 for pt in helpers.neighbors8(g, x, y):
                     start_x, num = num_start(g, *pt)
-                    if num != '':
+                    if num != "":
                         seen_starts.add((start_x, pt[1], int(num)))
+                        gears.setdefault((x, y), set()) # LAZY!  not guaranteed to work if a * is adjacent to the same number twice
+                        gears[(x, y)].add(int(num))
 
-    for start in seen_starts:
-        print(start)
-    s = sum(v[2] for v in seen_starts)
+    s = 0
+    for _, g in gears.items():
+        if len(g) == 2:
+            g = list(g)
+            s += g[0] * g[1]
     print(s)
-                
+
 
 main()
