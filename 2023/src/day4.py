@@ -6,6 +6,8 @@ import itertools
 import collections
 import re
 
+def card_wins(w, m):
+    return len(m.intersection(w))
 
 def main() -> None:
     lines = helpers.read_input()
@@ -16,13 +18,17 @@ def main() -> None:
         card, winners, mine = m.groups()
         cards.append((set(winners.strip().split()), set(mine.strip().split())))
     score = 0
-    for w, m in cards:
-        if not w.intersection(m):
-            continue
-        s = 2 ** (len(m.intersection(w)) - 1)
-        print(len(m.intersection(w)), s, m.intersection(w), w, m)
-        score += s
-    print(score)
+    idx = 0
+    card_counts = [1] * len(cards)
+    for idx, (w, m) in enumerate(cards):
+        wins = card_wins(w, m)
+        print(f'card {idx} won {wins} cards ({card_counts})')
+        for j in range(wins):
+            if idx + j + 1 < len(card_counts):
+                card_counts[idx + j + 1] += card_counts[idx]
+    print(card_counts)
+    print(sum(card_counts))
+        
 
 
 main()
