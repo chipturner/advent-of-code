@@ -44,8 +44,9 @@ def main() -> None:
             cur_list.append([(dst, dst + rng - 1), (start, start + rng - 1)])
         idx += 1
 
-    for seed in seeds:
-        score = find_path(dicts, seed)
-        print(score)
+    for seed_start, seed_range in zip(seeds[::2], seeds[1::2]):
+        for s in range(seed_start, seed_start + seed_range):
+            score = find_path(dicts, s)
+            print(seed_start, seed_range, score - s, s, score)
 
 main()
