@@ -13,9 +13,10 @@ def dist_traveled(held, total):
 
 def main() -> None:
     lines = helpers.read_input()
-    times = map(int, lines[0].split()[1:])
-    dists = map(int, lines[1].split()[1:])
-    time_dists = zip(times, dists)
+    times = int(lines[0].split(maxsplit=1)[1].replace(' ', ''))
+    dists = int(lines[1].split(maxsplit=1)[1].replace(' ', ''))
+    print(times,dists)
+    time_dists = [ [times, dists] ]
     print(times, dists)
 
     tot = 1
@@ -24,7 +25,7 @@ def main() -> None:
         for held in range(t):
             nd = dist_traveled(held, t)
             if d < nd:
-                print(t, d, held)
+                # print(t, d, held)
                 wins += 1
         tot *= wins
     print(tot)
