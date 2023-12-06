@@ -6,17 +6,19 @@ import itertools
 import collections
 import re
 
+
 def dist_traveled(held, total):
     if held >= total:
         return 0
     return held * (total - held)
 
+
 def main() -> None:
     lines = helpers.read_input()
-    times = int(lines[0].split(maxsplit=1)[1].replace(' ', ''))
-    dists = int(lines[1].split(maxsplit=1)[1].replace(' ', ''))
-    print(times,dists)
-    time_dists = [ [times, dists] ]
+    times = int(lines[0].split(maxsplit=1)[1].replace(" ", ""))
+    dists = int(lines[1].split(maxsplit=1)[1].replace(" ", ""))
+    print(times, dists)
+    time_dists = [[times, dists]]
     print(times, dists)
 
     tot = 1
@@ -29,5 +31,6 @@ def main() -> None:
                 wins += 1
         tot *= wins
     print(tot)
+
 
 main()

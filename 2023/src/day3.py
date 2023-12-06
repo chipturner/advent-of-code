@@ -40,7 +40,9 @@ def main() -> None:
                     start_x, num = num_start(g, *pt)
                     if num != "":
                         seen_starts.add((start_x, pt[1], int(num)))
-                        gears.setdefault((x, y), set()) # LAZY!  not guaranteed to work if a * is adjacent to the same number twice
+                        gears.setdefault(
+                            (x, y), set()
+                        )  # LAZY!  not guaranteed to work if a * is adjacent to the same number twice
                         gears[(x, y)].add(int(num))
 
     s = 0
