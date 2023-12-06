@@ -22,8 +22,22 @@ def find_path(paths, seed):
                 break
                 
     return cur
-        
-    
+
+def backwards_find_path(paths, loc):
+    cur = loc
+    global path
+    map_order = reversed(list(zip(path[:-1], path[1:])))
+    for f, t in map_order:
+        cur_path = paths[(f, t)]
+        for segment in cur_path:
+            (dst0, dst1), (src0, src1) = segment
+            if dst0 <= cur <= dst1:
+                cur = src0 + cur - dst0
+                break
+                
+    return cur
+
+            
 
 def main() -> None:
     lines = helpers.read_input()
@@ -44,9 +58,19 @@ def main() -> None:
             cur_list.append([(dst, dst + rng - 1), (start, start + rng - 1)])
         idx += 1
 
-    for seed_start, seed_range in zip(seeds[::2], seeds[1::2]):
-        for s in range(seed_start, seed_start + seed_range):
-            score = find_path(dicts, s)
-            print(seed_start, seed_range, score - s, s, score)
+    print('ttt', find_path(dicts, 897591494))
+    print('ttt', find_path(dicts, 897591494-100))
+
+    seed_ranges = [ (s[0], s[0] + s[1] - 1) for s in zip(seeds[::2], seeds[1::2]) ]
+    i = 0
+    while i < seed_ranges[-1][0] + seed_ranges[-1][1]:
+        if i % 100000 == 0:
+            print(f'checking for seed {i}')
+        maybe_seed = backwards_find_path(dicts, i)
+        for seed_range in seed_ranges:
+            if seed_range[0] <= maybe_seed < seed_range[1]:
+                print(f"{i} {maybe_seed} {backwards_find_path(dicts, i)}")
+                raise ValueError('oops')
+        i += 1
 
 main()
