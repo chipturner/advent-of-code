@@ -7,7 +7,7 @@ import itertools
 import collections
 import re
 
-strengths = {c: 14 - idx for idx, c in enumerate("AKQJT987654321")}
+strengths = {c: 14 - idx for idx, c in enumerate("AKQT987654321J")}
 print(strengths)
 
 
@@ -41,12 +41,24 @@ def rank_hand_inner(hand):
 
 
 @functools.cache
-def rank_hand(hand):
+def rank_hand_middle(hand, orig_hand):
     ret = rank_hand_inner(hand) << 32
-    for idx, ch in enumerate(hand):
+    for idx, ch in enumerate(orig_hand):
         ret |= strengths[ch] << 4 * (4-idx)
     return ret
 
+@functools.cache
+def rank_hand(hand, orig_hand=None):
+    if orig_hand is None:
+        orig_hand = hand
+
+    scores = [rank_hand_middle(hand, orig_hand)]
+    for idx, c in enumerate(hand):
+        if c == 'J':
+            for sub in strengths:
+                if sub != 'J':
+                    scores.append(rank_hand(hand[:idx] + sub + hand[idx+1:], orig_hand))
+    return max(scores)
 
 def cmp_card_values(hand1, hand2):
     for c1, c2 in zip(hand1, hand2):
@@ -59,13 +71,6 @@ def cmp_card_values(hand1, hand2):
 
 def cmp_hands(hand1, hand2):
     return cmp(rank_hand(hand2), rank_hand(hand1))
-
-t1, t2 = '12345 12345'.split()
-print(t1, t2)
-print(f'{rank_hand(t1):#018x} {rank_hand(t2):#018x}')
-print(cmp_hands(t1, t2))
-print(cmp_card_values(t1, t2))
-
 
 def main() -> None:
     lines = helpers.read_input()
