@@ -23,9 +23,6 @@ from typing import (
     Optional,
     TextIO,
 )
-import numbers
-import platform
-
 import numpy
 import numpy.typing
 
