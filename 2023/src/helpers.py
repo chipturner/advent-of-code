@@ -1,5 +1,3 @@
-#!usr/bin/python3.9
-
 from __future__ import annotations
 
 from enum import Enum
@@ -26,6 +24,7 @@ from typing import (
 import numpy
 import numpy.typing
 
+
 # list of lines
 def read_input() -> List[str]:
     return list(l.strip() for l in fileinput.input())
@@ -44,6 +43,7 @@ def read_input_numbers(sep: str = ",") -> List[int]:
 
 
 T = TypeVar("T", bound=numpy.generic)
+
 
 # grid of densly packed digits like '12139' etc
 def read_input_digit_grid(conv: Callable[[str], T]) -> numpy.typing.NDArray[T]:
