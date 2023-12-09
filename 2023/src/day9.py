@@ -23,11 +23,13 @@ def main() -> None:
         nums_seq.reverse()
         nums_seq[0].append(0)
         for idx in range(len(nums_seq) - 1):
-            last_delta = nums_seq[idx][-1]
-            nums_seq[idx + 1].append(last_delta + nums_seq[idx + 1][-1])
+            last_delta = nums_seq[idx][0]
+            nums_seq[idx + 1].insert(0, (nums_seq[idx + 1][0] - last_delta))
+        print(nums_seq)
         out_seqs.append(nums_seq)
+    print()
     print(list(v[-1] for v in out_seqs))
-    print(sum(v[-1][-1] for v in out_seqs))
+    print(sum(v[-1][0] for v in out_seqs))
 
 
 main()
