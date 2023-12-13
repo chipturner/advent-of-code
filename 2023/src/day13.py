@@ -12,14 +12,12 @@ import numpy
 def get_row_sym(g):
     for y in range(1, g.shape[0]):
         r1, r2 = y - 1, y
-        different = False
+        differences = 0
         while r1 >= 0 and r2 < g.shape[0]:
-            if not numpy.array_equal(g[r1], g[r2]):
-                different = True
-                break
+            differences += numpy.sum(g[r1] != g[r2])
             r1 -= 1
             r2 += 1
-        if not different:
+        if differences == 1:
             print('row sym at', y)
             return y
     return 0
