@@ -18,7 +18,7 @@ def scale_gaps(gaps, v):
 
 
 def main() -> None:
-    g = helpers.read_input_digit_grid(str)
+    g = helpers.read_input_grid()
     print(g)
     print("\n".join("".join(r) for r in g))
     print()

@@ -6,6 +6,7 @@ import itertools
 import collections
 import re
 import numpy
+from typing import Dict
 
 spins = {"N": 0, "W": 1, "S": 2, "E": 3}
 
@@ -35,11 +36,11 @@ def roll(grid, d):
 
 
 def main() -> None:
-    grid = helpers.read_input_digit_grid(str)
+    grid = helpers.read_input_grid()
     grid.setflags(write=True)
 
     rotations = itertools.cycle("NWSE")
-    previously_seen = {}
+    previously_seen: Dict[bytes, int] = {}
     n = 0
     while n < 1000000000:
         cur_str = grid.tobytes()

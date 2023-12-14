@@ -31,7 +31,7 @@ fills = {
 
 
 def main() -> None:
-    g = helpers.read_input_digit_grid(str)
+    g = helpers.read_input_grid()
     for y in range(len(g)):
         for x in range(len(g[0])):
             if g[(y, x)] == "S":

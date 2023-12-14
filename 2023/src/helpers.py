@@ -45,9 +45,18 @@ def read_input_numbers(sep: str = ",") -> List[int]:
 T = TypeVar("T", bound=numpy.generic)
 
 
-# grid of densly packed digits like '12139' etc
-def read_input_digit_grid(conv: Callable[[str], T]) -> numpy.typing.NDArray[T]:
-    ret = numpy.array(list(list(conv(i) for i in l) for l in read_input()))
+def read_input_digit_grid() -> numpy.typing.NDArray[numpy.int_]:
+    ret = numpy.array(
+        list(list(numpy.int_(i) for i in l) for l in read_input()), dtype="i1"
+    )
+    ret.setflags(write=False)
+    return ret
+
+
+def read_input_grid() -> numpy.typing.NDArray[numpy.str_]:
+    ret = numpy.array(
+        list(list(numpy.str_(i) for i in l) for l in read_input()), dtype="U1"
+    )
     ret.setflags(write=False)
     return ret
 
