@@ -141,6 +141,10 @@ class Point:
     def sign(self) -> Point:
         return Point(numpy.sign(self.x), numpy.sign(self.y))
 
+def print_numpy_grid(g: numpy.typing.NDArray[T]):
+    for row in g:
+        print(''.join(row))
+
 
 def print_grid(g: Dict[Point, Any]) -> None:
     min_i = min(p.x for p in g.keys())
