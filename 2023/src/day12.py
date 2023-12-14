@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import helpers
 
+import functools
 import itertools
 import collections
 import re
@@ -9,6 +10,7 @@ import re
 def tprint(*args):
     pass
 
+@functools.lru_cache
 def count_matches(state, blocks):
     tprint('cm', state, blocks)
     if not blocks:
@@ -44,8 +46,9 @@ def count_matches(state, blocks):
 def main() -> None:
     s = 0
     for state, blocks in helpers.read_input_split():
-        blocks = [ int(i) for i in blocks.split(',') ]
-        m = count_matches(state, blocks)
+        blocks = [ int(i) for i in blocks.split(',') ] * 5
+        state = '?'.join((state, state, state, state, state))
+        m = count_matches(state, tuple(blocks))
         print('RES', state, blocks, m)
         s += m
     print(s)
