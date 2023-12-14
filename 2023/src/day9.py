@@ -6,11 +6,13 @@ import itertools
 import collections
 import re
 
+
 def delta(nums):
-    return [ v1 - v0 for v0, v1 in zip(nums[:-1], nums[1:]) ]
+    return [v1 - v0 for v0, v1 in zip(nums[:-1], nums[1:])]
+
 
 def main() -> None:
-    lines = [ list(map(int, l.split())) for l in helpers.read_input() ]
+    lines = [list(map(int, l.split())) for l in helpers.read_input()]
 
     s = 0
     out_seqs = []

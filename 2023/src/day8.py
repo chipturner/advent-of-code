@@ -16,7 +16,7 @@ def main() -> None:
         m[line[0:3]] = line[7:10], line[12:15]
 
     c = 0
-    curs = list([s for s in m if s[-1] == 'A'])
+    curs = list([s for s in m if s[-1] == "A"])
     hop_counts = [0] * (len(curs))
 
     for idx, cur in enumerate(curs):
@@ -24,7 +24,7 @@ def main() -> None:
         for step in steps:
             c += 1
             curs[idx] = m[curs[idx]][step_idx[step]]
-            if curs[idx][-1] == 'Z':
+            if curs[idx][-1] == "Z":
                 hop_counts[idx] = c
                 break
         print(hop_counts)
