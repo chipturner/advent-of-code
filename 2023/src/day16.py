@@ -25,21 +25,14 @@ inout = {
     "\\": {N: (E,), E: (N,), W: (S,), S: (W,)},
 }
 
-
-def main() -> None:
-    grid = helpers.read_input_grid()
-    print(grid)
-    energized_grid = grid.copy()
-
-    cursors = [Beam(Point(-1, 0), E)]
+def fire_beam(grid, start):
+    cursors = [start]
 
     energized = set()
 
     seen_beams = set()
 
     while cursors:
-        # helpers.print_numpy_grid(energized_grid)
-        # print()
         c, cursors = cursors[0], cursors[1:]
         if c in seen_beams:
             continue
@@ -48,7 +41,6 @@ def main() -> None:
         if new_pos.y < 0 or new_pos.x < 0 or new_pos.y >= grid.shape[0] or new_pos.x >= grid.shape[1]:
             continue
         energized.add(new_pos)
-        energized_grid[new_pos.y, new_pos.x] = '#'
         ch = grid[new_pos.y, new_pos.x]
         splits = inout.get(ch, {})
         new_vecs = splits.get(-c.vec, [])
@@ -58,6 +50,21 @@ def main() -> None:
         else:
             cursors.append(Beam(new_pos, c.vec))
 
-    print(len(energized))
+    return len(energized)
+
+def main() -> None:
+    grid = helpers.read_input_grid()
+    print(grid)
+
+    starts = []
+    for start_x in range(grid.shape[1]):
+        starts.append(Beam(Point(-1, start_x), E))
+        starts.append(Beam(Point(grid.shape[1], start_x), W))
+    for start_y in range(grid.shape[0]):
+        starts.append(Beam(Point(start_y, -1), N))
+        starts.append(Beam(Point(start_y, grid.shape[0]), S))
+    for start in starts:
+        print('s', start)
+        print(fire_beam(grid, start))
 
 main()
