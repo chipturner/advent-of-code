@@ -147,6 +147,9 @@ class Point:
     def magnitude(self) -> float:
         return math.sqrt(self.x**2 + self.y**2)
 
+    def __neg__(self) -> Point:
+        return Point(-self.x, -self.y)
+
     def sign(self) -> Point:
         return Point(numpy.sign(self.x), numpy.sign(self.y))
 
