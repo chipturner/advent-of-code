@@ -156,7 +156,7 @@ class Point:
 
 def print_numpy_grid(g: numpy.typing.NDArray[T]):
     for row in g:
-        print("".join(row))
+        print("".join(str(s) for s in row))
 
 
 def print_grid(g: Dict[Point, Any]) -> None:
