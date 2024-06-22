@@ -10,49 +10,73 @@ import sys
 
 Point = helpers.Point
 
-offsets = {'U': Point(0, -1), 'D': Point(0, 1), 'L': Point(-1, 0), 'R': Point(1, 0)}
+offsets = {'3': Point(0, -1), '1': Point(0, 1), '2': Point(-1, 0), '0': Point(1, 0)}
+
+def condense_range(r):
+    assert sorted(r) == r
+    ret = []
+    for idx, (v0, v1) in enumerate(zip(r[:-1], r[1:])):
+        ret.append((idx, idx + 1, v1 - v0))
+    return ret
+
+def range_value(r, val):
+    s = 0
+    for v0, v1, weight in r:
+        if s <= val < s + weight:
+            return v0
+        s += weight
+    return r[-1][1] + 1
+
+def point_weight(r1, r2, pt):
+    return range_value(r1, pt.y) * range_value(r2, pt.x)
 
 def main() -> None:
     lines = helpers.read_input()
 
-    pos = Point(500, 500)
-    grid = {}
-    grid_colors = {}
-    min_row, min_col, max_row, max_col = sys.maxsize, sys.maxsize, -1, -1
+    first_pos = pos = Point(0, 0)
+    vertices = set()
+    row_pts = []
+    col_pts = []
+    edges = []
     for d, dist, color in [ re.match(r'(.) (.+) \(#(.*?)\)', line).groups() for line in lines ]:
-        for _ in range(int(dist)):
-            min_row = min(min_row, pos.y)
-            min_col = min(min_col, pos.x)
-            max_row = max(max_row, pos.y)
-            max_col = max(max_col, pos.x)
-            grid[pos] = '#'
-            grid_colors[pos] = color
-            delta = offsets[d]
-            pos += delta
-    helpers.print_grid(grid)
-    print()
+        d, dist = color[-1], int(color[:-1], 16)
+        next_pos = pos + offsets[d] * dist
+        vertices.add(pos)
+        vertices.add(next_pos)
+        edges.append((pos, next_pos))
+        pos = next_pos
+    # edges.append((pos, first_pos))
+    print('v', vertices)
+    print(edges)
+    row_pts = sorted(set(v.y for v in vertices))
+    col_pts = sorted(set(v.x for v in vertices))
+    print(row_pts, col_pts)
 
-    start = Point(500, 500)
-    while grid.get(start, None) == '#':
-        start += Point(1, 1)
-    todo = [ start ]
-    grid_copy = grid.copy()
-    fills = 0
-    seen = set()
-    while todo:
-        cur = todo.pop(0)
-        if cur in seen:
-            continue
-        seen.add(cur)
-        for offset in offsets.values():
-            new_pt = cur + offset
-            if (min_col <= new_pt.x <= max_col) and (min_row <= new_pt.y <= max_row):
-                if grid_copy.get(new_pt, None) == None:
-                    todo.append(new_pt)
-                    grid_copy[new_pt] = 'X'
-                    fills += 1
-    helpers.print_grid(grid_copy)
-    print(fills)
-    print(sum(1 for ch in grid_copy.values() if ch in ('X', '#')))
+    row_ranges = condense_range(row_pts)
+    col_ranges = condense_range(col_pts)
+
+    new_edges = []
+    for e0, e1 in edges:
+        new_edges.append((Point(range_value(row_ranges, e0.x), range_value(col_ranges, e0.y)),
+                          Point(range_value(row_ranges, e1.x), range_value(col_ranges, e1.y))))
+
+    grid = {}
+    for e0, e1 in new_edges:
+        if e0.x == e1.x:
+            if e0.y > e1.y:
+                delta = (0, -1)
+            else:
+                delta = (0, 1)
+        elif e0.y == e1.y:
+            if e0.x > e1.x:
+                delta = (-1, 0)
+            else:
+                delta = (1, 0)
+        ptdelta = Point(*delta)
+        pt = e0
+        while pt != e1:
+            grid[pt] = '#'
+            pt += ptdelta
+    helpers.print_grid(grid)
 
 main()

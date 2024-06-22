@@ -150,6 +150,9 @@ class Point:
     def __neg__(self) -> Point:
         return Point(-self.x, -self.y)
 
+    def __mul__(self, other: int) -> Point:
+        return Point(self.x * other, self.y * other)
+
     def sign(self) -> Point:
         return Point(numpy.sign(self.x), numpy.sign(self.y))
 
