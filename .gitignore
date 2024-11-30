@@ -131,3 +131,4 @@ dmypy.json
 # aoc cookie
 .aoc-session-cookie
 .direnv
+.aider*
