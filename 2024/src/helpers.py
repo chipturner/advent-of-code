@@ -7,6 +7,7 @@ import fileinput
 import math
 import operator
 from dataclasses import dataclass
+import sys
 
 from typing import (
     List,
@@ -31,8 +32,19 @@ def read_input() -> List[str]:
 
 
 # list of lists of lines split by delimiter
-def read_input_split(sep: str = " ", nsplit: int = 1) -> List[List[str]]:
-    return [l.strip().split(sep, nsplit) for l in read_input()]
+def read_input_split(
+    sep: str = " ",
+    nsplit: Optional[int] = 1,
+    mapper: Optional[Callable[[str], Any]] = None,
+) -> List[List[Any]]:
+    if nsplit is None:
+        nsplit = sys.maxsize
+    if mapper is None:
+
+        def mapper(x):
+            return x
+
+    return [list(map(mapper, l.strip().split(sep, nsplit))) for l in read_input()]
 
 
 # single line of separated numbers
