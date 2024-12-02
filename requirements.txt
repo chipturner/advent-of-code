@@ -4,3 +4,9 @@ parse
 mypy
 pylint
 types-Pillow
+python-lsp-server
+pylsp-mypy
+flake8
+python-lsp-server[all]
+pylsp-mypy
+pyright
