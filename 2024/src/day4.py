@@ -14,21 +14,20 @@ def main() -> None:
     gdict = dict()
     for row in range(len(grid)):
         for col in range(len(grid[0])):
-            gdict[(row, col)] = grid[row][col]
+            gdict[helpers.Point(row, col)] = grid[row][col]
 
     found = 0
     for pos, ch in gdict.items():
-        if ch == "X":
-            for npos in helpers.neighbors8(grid, *pos):
-                if gdict[npos] == "M":
-                    p1 = helpers.Point(*pos)
-                    p2 = helpers.Point(*npos)
-                    delta = p2 - p1
-                    if (
-                        gdict.get((p2 + delta).tuple()) == "A"
-                        and gdict.get((p2 + delta + delta).tuple()) == "S"
-                    ):
-                        found += 1
+        if pos.x == 0 or pos.y == 0 or pos.x == len(grid) - 1 or pos.y == len(grid[0]) - 1:
+            continue
+        if ch == "A":
+            c1, c2, c3, c4 = pos + helpers.Point(-1, -1), pos + helpers.Point(-1, 1), pos + helpers.Point(1, 1), pos + helpers.Point(1, -1)
+            p1 = gdict[c1] + gdict[c3]
+            p2 = gdict[c2] + gdict[c4]
+            print(ch, pos, c1, c3, p1, p2)
+            if sorted(p1) == sorted(p2) == list('MS'):
+                print(ch, pos, p1, p2)
+                found += 1
     print(found)
 
 
