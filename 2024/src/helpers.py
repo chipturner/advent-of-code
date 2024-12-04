@@ -150,6 +150,9 @@ class Point:
     def from_str(s: str) -> Point:
         return Point(*map(int, s.split(",")))
 
+    def tuple(self) -> Tuple[int, int]:
+        return (self.x, self.y)
+
     def __add__(self, other: Point) -> Point:
         return Point(self.x + other.x, self.y + other.y)
 

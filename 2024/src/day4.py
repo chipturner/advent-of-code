@@ -6,30 +6,30 @@ import itertools
 import collections
 import re
 
-def check_n(grid, path, seq):
-    row, col = path[-1]
-    if seq[0] != grid[row][col]:
-        return 0
-    if len(seq) == 1:
-        print(path)
-        return 1
-    ret = 0
-    for n in helpers.neighbors8(grid, row, col):
-        ret += check_n(grid, path + [(n[0], n[1])], seq[1:])
-    return ret
-
 
 def main() -> None:
-    lines = helpers.read_input_grid()
-    print(lines)
+    grid = helpers.read_input_grid()
+    print(grid)
+
+    gdict = dict()
+    for row in range(len(grid)):
+        for col in range(len(grid[0])):
+            gdict[(row, col)] = grid[row][col]
 
     found = 0
-    for row in range(len(lines)):
-        for col in range(len(lines[0])):
-            t = check_n(lines, [(row, col)], 'XMAS')
-            if t > 0:
-                print('found', row, col, t)
-            found += t
+    for pos, ch in gdict.items():
+        if ch == "X":
+            for npos in helpers.neighbors8(grid, *pos):
+                if gdict[npos] == "M":
+                    p1 = helpers.Point(*pos)
+                    p2 = helpers.Point(*npos)
+                    delta = p2 - p1
+                    if (
+                        gdict.get((p2 + delta).tuple()) == "A"
+                        and gdict.get((p2 + delta + delta).tuple()) == "S"
+                    ):
+                        found += 1
     print(found)
+
 
 main()
