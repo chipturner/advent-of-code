@@ -8,24 +8,28 @@ import re
 
 
 def main() -> None:
-    grid = helpers.read_input_grid()
+    grid = helpers.Grid.from_stdin()
     print(grid)
 
-    gdict = dict()
-    for row in range(len(grid)):
-        for col in range(len(grid[0])):
-            gdict[helpers.Point(row, col)] = grid[row][col]
-
     found = 0
-    for pos, ch in gdict.items():
-        if pos.x == 0 or pos.y == 0 or pos.x == len(grid) - 1 or pos.y == len(grid[0]) - 1:
+    for (row, col), ch in grid.items():
+        if row == 0 or col == 0 or row == grid.nrows - 1 or col == grid.ncols - 1:
             continue
         if ch == "A":
-            c1, c2, c3, c4 = pos + helpers.Point(-1, -1), pos + helpers.Point(-1, 1), pos + helpers.Point(1, 1), pos + helpers.Point(1, -1)
-            p1 = gdict[c1] + gdict[c3]
-            p2 = gdict[c2] + gdict[c4]
-            print(ch, pos, c1, c3, p1, p2)
-            if sorted(p1) == sorted(p2) == list('MS'):
+            pos = helpers.Coordinate(row, col)
+            up_left, up_right, down_left, down_right = [
+                pos + x
+                for x in (
+                    helpers.up_left,
+                    helpers.up_right,
+                    helpers.down_left,
+                    helpers.down_right,
+                )
+            ]
+            p1 = grid[up_left] + grid[down_right]
+            p2 = grid[up_right] + grid[down_left]
+            print(ch, up_left, down_right, p1, p2)
+            if sorted(p1) == sorted(p2) == list("MS"):
                 print(ch, pos, p1, p2)
                 found += 1
     print(found)

@@ -6,7 +6,7 @@ import functools
 import fileinput
 import math
 import operator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import sys
 
 from typing import (
@@ -322,3 +322,70 @@ def decode_packet(p: TextIO) -> BitsPacket:
                 acc.append(val)
             packet.children = acc
     return packet
+
+
+@dataclass
+class Coordinate:
+    row: int
+    col: int
+
+    def __add__(self, other: Coordinate) -> Coordinate:
+        return Coordinate(self.row + other.row, self.col + other.col)
+
+    def __sub__(self, other: Coordinate) -> Coordinate:
+        return Coordinate(self.row - other.row, self.col - other.col)
+
+    def __neg__(self) -> Coordinate:
+        return Coordinate(-self.row, -self.col)
+
+
+up = Coordinate(-1, 0)
+down = Coordinate(1, 0)
+left = Coordinate(0, -1)
+right = Coordinate(0, 1)
+up_left = up + left
+down_left = down + left
+up_right = up + right
+down_right = down + right
+
+
+@dataclass
+class Grid:
+    nrows: int = 0
+    ncols: int = 0
+    entries: List[List[str]] = field(default_factory=list)
+
+    def from_stdin():
+        ret = Grid()
+        ret.entries = [list(l.strip()) for l in read_input()]
+        ret.nrows = len(ret.entries)
+        ret.ncols = len(ret.entries[0])
+        return ret
+
+    def __getitem__(self, idx):
+        if isinstance(idx, Coordinate):
+            r, c = idx.row, idx.col
+        else:
+            r, c = idx
+        return self.entries[r][c]
+
+    def neighbors(self, row, col):
+        h, w = self.nrows, self.neighborscols
+        for pos in (
+            (i, j + 1),
+            (i, j - 1),
+            (i + 1, j),
+            (i - 1, j),
+            (i + 1, j + 1),
+            (i - 1, j - 1),
+            (i + 1, j - 1),
+            (i - 1, j + 1),
+        ):
+            if pos[0] < 0 or pos[1] < 0 or pos[0] >= h or pos[1] >= w:
+                continue
+            yield pos
+
+    def items(self):
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                yield (r, c), self.entries[r][c]
