@@ -326,7 +326,7 @@ def decode_packet(p: TextIO) -> BitsPacket:
     return packet
 
 
-@dataclass
+@dataclass(frozen=True)
 class Coordinate:
     row: int
     col: int
@@ -369,7 +369,18 @@ class Grid:
             r, c = idx.row, idx.col
         else:
             r, c = idx
+        if r < 0 or c < 0:
+            raise IndexError
         return self.entries[r][c]
+
+    def __setitem__(self, idx, val):
+        if isinstance(idx, Coordinate):
+            r, c = idx.row, idx.col
+        else:
+            r, c = idx
+        if r < 0 or c < 0:
+            raise IndexError
+        self.entries[r][c] = val
 
     def neighbors(self, row, col):
         h, w = self.nrows, self.neighborscols
@@ -391,3 +402,6 @@ class Grid:
         for r in range(self.nrows):
             for c in range(self.ncols):
                 yield (r, c), self.entries[r][c]
+
+    def print(self):
+        print('\n'.join(''.join(row) for row in self.entries))
