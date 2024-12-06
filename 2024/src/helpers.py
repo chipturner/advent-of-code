@@ -30,6 +30,8 @@ import numpy.typing
 def read_input() -> List[str]:
     return list(l.strip() for l in fileinput.input())
 
+def read_input_slurp() -> str:
+    return '\n'.join(read_input())
 
 # list of lists of lines split by delimiter
 def read_input_split(

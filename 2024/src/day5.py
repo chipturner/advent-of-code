@@ -24,7 +24,7 @@ def page_sorter(ordering, a, b):
     return 0
 
 def main() -> None:
-    rules, pages = '\n'.join(helpers.read_input()).split('\n\n')
+    rules, pages = helpers.read_input_slurp().split('\n\n')
     rules = rules.split('\n')
     pages = pages.split('\n')
     ordering = collections.defaultdict(set)
