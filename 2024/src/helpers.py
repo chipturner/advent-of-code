@@ -405,3 +405,8 @@ class Grid:
 
     def print(self):
         print('\n'.join(''.join(row) for row in self.entries))
+
+    def in_bounds(self, coord):
+        if coord.row < 0 or coord.col < 0 or coord.row >= self.nrows or coord.col >= self.ncols:
+            return False
+        return True
