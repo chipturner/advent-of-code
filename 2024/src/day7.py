@@ -12,7 +12,8 @@ def can_match(val, accum, args):
     if len(args) == 0:
         return val == accum
     if (can_match(val, accum + args[0], args[1:]) or
-        can_match(val, accum * args[0], args[1:])):
+        can_match(val, accum * args[0], args[1:]) or
+        can_match(val, int(str(accum) + str(args[0])), args[1:])):
         return True
     return False
 
