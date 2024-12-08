@@ -341,6 +341,9 @@ class Coordinate:
     def __neg__(self) -> 'Coordinate':
         return Coordinate(-self.row, -self.col)
 
+    def __mul__(self, x):
+        return Coordinate(x * self.row, x * self.col)
+
     def __iter__(self):
         yield self.row
         yield self.col
