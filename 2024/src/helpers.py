@@ -331,14 +331,18 @@ class Coordinate:
     row: int
     col: int
 
-    def __add__(self, other: Coordinate) -> Coordinate:
+    def __add__(self, other: 'Coordinate') -> 'Coordinate':
         return Coordinate(self.row + other.row, self.col + other.col)
 
-    def __sub__(self, other: Coordinate) -> Coordinate:
+    def __sub__(self, other: 'Coordinate') -> 'Coordinate':
         return Coordinate(self.row - other.row, self.col - other.col)
 
-    def __neg__(self) -> Coordinate:
+    def __neg__(self) -> 'Coordinate':
         return Coordinate(-self.row, -self.col)
+
+    def __iter__(self):
+        yield self.row
+        yield self.col
 
 
 up = Coordinate(-1, 0)
@@ -350,27 +354,32 @@ down_left = down + left
 up_right = up + right
 down_right = down + right
 
-
 @dataclass
 class Grid:
     nrows: int = 0
     ncols: int = 0
     entries: List[List[str]] = field(default_factory=list)
 
-    def from_stdin():
-        ret = Grid()
-        ret.entries = [list(l.strip()) for l in read_input()]
-        ret.nrows = len(ret.entries)
-        ret.ncols = len(ret.entries[0])
-        return ret
+    @classmethod
+    def from_stdin(cls) -> 'Grid':
+        lines = [list(l.strip()) for l in read_input()]
+        return Grid.from_list_of_strings(lines)
+
+    @classmethod
+    def from_list_of_strings(cls, rows: List[str]) -> 'Grid':
+        g = cls()
+        g.entries = [list(r) for r in rows]
+        g.nrows = len(g.entries)
+        g.ncols = len(g.entries[0]) if g.nrows > 0 else 0
+        return g
 
     def __getitem__(self, idx):
         if isinstance(idx, Coordinate):
             r, c = idx.row, idx.col
         else:
             r, c = idx
-        if r < 0 or c < 0:
-            raise IndexError
+        if r < 0 or c < 0 or r >= self.nrows or c >= self.ncols:
+            raise IndexError("Index out of bounds")
         return self.entries[r][c]
 
     def __setitem__(self, idx, val):
@@ -378,35 +387,75 @@ class Grid:
             r, c = idx.row, idx.col
         else:
             r, c = idx
-        if r < 0 or c < 0:
-            raise IndexError
+        if r < 0 or c < 0 or r >= self.nrows or c >= self.ncols:
+            raise IndexError("Index out of bounds")
         self.entries[r][c] = val
 
-    def neighbors(self, row, col):
-        h, w = self.nrows, self.neighborscols
-        for pos in (
-            (i, j + 1),
-            (i, j - 1),
-            (i + 1, j),
-            (i - 1, j),
-            (i + 1, j + 1),
-            (i - 1, j - 1),
-            (i + 1, j - 1),
-            (i - 1, j + 1),
-        ):
-            if pos[0] < 0 or pos[1] < 0 or pos[0] >= h or pos[1] >= w:
-                continue
-            yield pos
+    def neighbors(self, row: int, col: int) -> Iterator[Coordinate]:
+        directions = [up, down, left, right, up_left, up_right, down_left, down_right]
+        for d in directions:
+            n = Coordinate(row + d.row, col + d.col)
+            if self.in_bounds(n):
+                yield n
 
     def items(self):
         for r in range(self.nrows):
             for c in range(self.ncols):
-                yield (r, c), self.entries[r][c]
+                yield Coordinate(r, c), self.entries[r][c]
 
     def print(self):
         print('\n'.join(''.join(row) for row in self.entries))
 
-    def in_bounds(self, coord):
-        if coord.row < 0 or coord.col < 0 or coord.row >= self.nrows or coord.col >= self.ncols:
-            return False
-        return True
+    def in_bounds(self, coord: Coordinate) -> bool:
+        return (0 <= coord.row < self.nrows) and (0 <= coord.col < self.ncols)
+
+    def get(self, coord: Coordinate, default: Optional[str] = None) -> Optional[str]:
+        if self.in_bounds(coord):
+            return self[coord]
+        return default
+
+    def row_values(self, r: int) -> List[str]:
+        if r < 0 or r >= self.nrows:
+            raise IndexError("Row out of range")
+        return self.entries[r]
+
+    def column_values(self, c: int) -> List[str]:
+        if c < 0 or c >= self.ncols:
+            raise IndexError("Column out of range")
+        return [self.entries[r][c] for r in range(self.nrows)]
+
+    def find_all(self, val: str) -> List[Coordinate]:
+        return [coord for coord, cell in self.items() if cell == val]
+
+    def contains(self, val: str) -> bool:
+        return any(cell == val for _, cell in self.items())
+
+    def subgrid(self, top_left: Coordinate, bottom_right: Coordinate) -> 'Grid':
+        if (not self.in_bounds(top_left)) or (not self.in_bounds(bottom_right)):
+            raise IndexError("Subgrid coordinates out of range")
+        rows = [
+            ''.join(self.entries[r][c] for c in range(top_left.col, bottom_right.col + 1))
+            for r in range(top_left.row, bottom_right.row + 1)
+        ]
+        return Grid.from_list_of_strings(rows)
+
+    def rotate_clockwise(self) -> 'Grid':
+        # 90-degree clockwise rotation
+        # new row count = old col count, new col count = old row count
+        # element [r, c] -> [c, nrows-1-r]
+        rotated = list(zip(*self.entries[::-1]))
+        new_rows = [''.join(row) for row in rotated]
+        return Grid.from_list_of_strings(new_rows)
+
+    def flip_horizontal(self) -> 'Grid':
+        new_entries = [row[::-1] for row in self.entries]
+        new_rows = [''.join(row) for row in new_entries]
+        return Grid.from_list_of_strings(new_rows)
+
+    def bulk_set(self, coords_values: List[tuple[Coordinate, str]]):
+        for coord, val in coords_values:
+            self[coord] = val
+
+    def apply(self, func):
+        for coord, val in list(self.items()):
+            self[coord] = func(coord, val)
