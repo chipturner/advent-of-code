@@ -7,6 +7,7 @@ import fileinput
 import math
 import operator
 from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
 import sys
 
 from typing import (
@@ -354,16 +355,69 @@ down_left = down + left
 up_right = up + right
 down_right = down + right
 
+DIRECTIONS = [up, down, left, right, up_left, up_right, down_left, down_right]
+
+class GridBase(ABC):
+    @abstractmethod
+    def __getitem__(self, idx: Any) -> str:
+        pass
+
+    @abstractmethod
+    def __setitem__(self, idx: Any, val: str):
+        pass
+
+    @abstractmethod
+    def in_bounds(self, coord: Coordinate) -> bool:
+        pass
+
+    @abstractmethod
+    def items(self) -> Iterator[Tuple[Coordinate, str]]:
+        pass
+
+    @abstractmethod
+    def __init__(self):
+        # So that derived classes remember to init
+        pass
+
+    def get(self, coord: Coordinate, default: Optional[str] = None) -> Optional[str]:
+        # Common implementation: try __getitem__, catch exceptions
+        try:
+            return self[coord]
+        except (IndexError, KeyError):
+            return default
+
+    def neighbors(self, row: int, col: int) -> Iterator[Coordinate]:
+        # Common implementation using directions and in_bounds
+        for d in DIRECTIONS:
+            n = Coordinate(row + d.row, col + d.col)
+            if self.in_bounds(n):
+                yield n
+
+    def find_all(self, val: str) -> List[Coordinate]:
+        return [coord for coord, cell in self.items() if cell == val]
+
+    def contains(self, val: str) -> bool:
+        return any(cell == val for _, cell in self.items())
+
+    def bulk_set(self, coords_values: List[Tuple[Coordinate, str]]):
+        for coord, v in coords_values:
+            self[coord] = v
+
+    def apply(self, func):
+        # Make a list so we don't mutate while iterating
+        for coord, val in list(self.items()):
+            self[coord] = func(coord, val)
+
+    def print(self):
+        # Default printing just prints items in no specific layout
+        for coord, val in self.items():
+            print(f"{coord}: {val}")
+
 @dataclass
-class Grid:
+class Grid(GridBase):
     nrows: int = 0
     ncols: int = 0
     entries: List[List[str]] = field(default_factory=list)
-
-    @classmethod
-    def from_stdin(cls) -> 'Grid':
-        lines = [list(l.strip()) for l in read_input()]
-        return Grid.from_list_of_strings(lines)
 
     @classmethod
     def from_list_of_strings(cls, rows: List[str]) -> 'Grid':
@@ -391,14 +445,10 @@ class Grid:
             raise IndexError("Index out of bounds")
         self.entries[r][c] = val
 
-    def neighbors(self, row: int, col: int) -> Iterator[Coordinate]:
-        directions = [up, down, left, right, up_left, up_right, down_left, down_right]
-        for d in directions:
-            n = Coordinate(row + d.row, col + d.col)
-            if self.in_bounds(n):
-                yield n
+    def in_bounds(self, coord: Coordinate) -> bool:
+        return 0 <= coord.row < self.nrows and 0 <= coord.col < self.ncols
 
-    def items(self):
+    def items(self) -> Iterator[Tuple[Coordinate, str]]:
         for r in range(self.nrows):
             for c in range(self.ncols):
                 yield Coordinate(r, c), self.entries[r][c]
@@ -406,14 +456,7 @@ class Grid:
     def print(self):
         print('\n'.join(''.join(row) for row in self.entries))
 
-    def in_bounds(self, coord: Coordinate) -> bool:
-        return (0 <= coord.row < self.nrows) and (0 <= coord.col < self.ncols)
-
-    def get(self, coord: Coordinate, default: Optional[str] = None) -> Optional[str]:
-        if self.in_bounds(coord):
-            return self[coord]
-        return default
-
+    # Extra methods that only make sense for bounded grids
     def row_values(self, r: int) -> List[str]:
         if r < 0 or r >= self.nrows:
             raise IndexError("Row out of range")
@@ -424,38 +467,58 @@ class Grid:
             raise IndexError("Column out of range")
         return [self.entries[r][c] for r in range(self.nrows)]
 
-    def find_all(self, val: str) -> List[Coordinate]:
-        return [coord for coord, cell in self.items() if cell == val]
+@dataclass
+class SparseGrid(GridBase):
+    def __init__(self, default: Optional[str] = None):
+        self.cells: Dict[Tuple[int,int], str] = {}
+        self.default = default
 
-    def contains(self, val: str) -> bool:
-        return any(cell == val for _, cell in self.items())
+    def __getitem__(self, idx):
+        if isinstance(idx, Coordinate):
+            r, c = idx.row, idx.col
+        else:
+            r, c = idx
+        if (r, c) in self.cells:
+            return self.cells[(r, c)]
+        if self.default is not None:
+            return self.default
+        # Not found: treat as KeyError so get() can handle it
+        raise KeyError("Cell not found")
 
-    def subgrid(self, top_left: Coordinate, bottom_right: Coordinate) -> 'Grid':
-        if (not self.in_bounds(top_left)) or (not self.in_bounds(bottom_right)):
-            raise IndexError("Subgrid coordinates out of range")
-        rows = [
-            ''.join(self.entries[r][c] for c in range(top_left.col, bottom_right.col + 1))
-            for r in range(top_left.row, bottom_right.row + 1)
-        ]
-        return Grid.from_list_of_strings(rows)
+    def __setitem__(self, idx, val):
+        if isinstance(idx, Coordinate):
+            r, c = idx.row, idx.col
+        else:
+            r, c = idx
+        self.cells[(r, c)] = val
 
-    def rotate_clockwise(self) -> 'Grid':
-        # 90-degree clockwise rotation
-        # new row count = old col count, new col count = old row count
-        # element [r, c] -> [c, nrows-1-r]
-        rotated = list(zip(*self.entries[::-1]))
-        new_rows = [''.join(row) for row in rotated]
-        return Grid.from_list_of_strings(new_rows)
+    def in_bounds(self, coord: Coordinate) -> bool:
+        # For sparse, infinite space assumed, always True
+        return True
 
-    def flip_horizontal(self) -> 'Grid':
-        new_entries = [row[::-1] for row in self.entries]
-        new_rows = [''.join(row) for row in new_entries]
-        return Grid.from_list_of_strings(new_rows)
+    def items(self) -> Iterator[Tuple[Coordinate, str]]:
+        for (r,c), val in self.cells.items():
+            yield Coordinate(r,c), val
 
-    def bulk_set(self, coords_values: List[tuple[Coordinate, str]]):
-        for coord, val in coords_values:
-            self[coord] = val
+def to_sparse(grid: Grid) -> SparseGrid:
+    sg = SparseGrid()
+    for coord, val in grid.items():
+        sg[coord] = val
+    return sg
 
-    def apply(self, func):
-        for coord, val in list(self.items()):
-            self[coord] = func(coord, val)
+def to_dense(sparse: SparseGrid, top_left: Coordinate, bottom_right: Coordinate) -> Grid:
+    rows = bottom_right.row - top_left.row + 1
+    cols = bottom_right.col - top_left.col + 1
+    arr = []
+    for r in range(top_left.row, top_left.row + rows):
+        row_arr = []
+        for c in range(top_left.col, top_left.col + cols):
+            val = sparse.get(Coordinate(r, c), default=' ')
+            row_arr.append(val)
+        arr.append(row_arr)
+
+    g = Grid()
+    g.entries = arr
+    g.nrows = rows
+    g.ncols = cols
+    return g

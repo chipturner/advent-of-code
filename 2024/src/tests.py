@@ -88,41 +88,6 @@ class TestGrid(unittest.TestCase):
         self.assertTrue(self.grid.contains('a'))
         self.assertFalse(self.grid.contains('z'))
 
-    def test_subgrid(self):
-        sub = self.grid.subgrid(Coordinate(0,1), Coordinate(1,2))
-        # should contain
-        # b c
-        # f g
-        self.assertEqual(sub.nrows, 2)
-        self.assertEqual(sub.ncols, 2)
-        self.assertEqual(sub[Coordinate(0,0)], 'b')
-        self.assertEqual(sub[Coordinate(1,1)], 'g')
-
-    def test_rotate_clockwise(self):
-        # original:
-        # a b c d
-        # e f g h
-        # i j k l
-        # rotate clockwise:
-        # i e a
-        # j f b
-        # k g c
-        # l h d
-        rotated = self.grid.rotate_clockwise()
-        self.assertEqual(rotated.nrows, 4)
-        self.assertEqual(rotated.ncols, 3)
-        self.assertEqual(rotated[Coordinate(0,0)], 'i')
-        self.assertEqual(rotated[Coordinate(3,2)], 'd')
-
-    def test_flip_horizontal(self):
-        # flip horizontally: reverse each row
-        # a b c d -> d c b a
-        # e f g h -> h g f e
-        # i j k l -> l k j i
-        flipped = self.grid.flip_horizontal()
-        self.assertEqual(flipped[Coordinate(0,0)], 'd')
-        self.assertEqual(flipped[Coordinate(1,0)], 'h')
-
     def test_bulk_set(self):
         self.grid.bulk_set([(Coordinate(0,0),'X'), (Coordinate(2,3),'Y')])
         self.assertEqual(self.grid[Coordinate(0,0)], 'X')
@@ -134,6 +99,52 @@ class TestGrid(unittest.TestCase):
         self.grid.apply(to_upper)
         self.assertEqual(self.grid[Coordinate(0,0)], 'A')
         self.assertEqual(self.grid[Coordinate(2,3)], 'L')
+
+class TestBaseMethods(unittest.TestCase):
+    def test_grid_methods(self):
+        g = Grid.from_list_of_strings(["abc","def"])
+        self.assertTrue(g.contains('a'))
+        self.assertFalse(g.contains('z'))
+        self.assertEqual(g.find_all('a'), [Coordinate(0,0)])
+        coords_values = [(Coordinate(0,1),'X'), (Coordinate(1,2),'Y')]
+        g.bulk_set(coords_values)
+        self.assertEqual(g[Coordinate(0,1)], 'X')
+        self.assertEqual(g[Coordinate(1,2)], 'Y')
+        def to_upper(coord, val): return val.upper()
+        g.apply(to_upper)
+        self.assertEqual(g[Coordinate(0,1)], 'X')
+        self.assertEqual(g[Coordinate(1,2)], 'Y')
+
+    def test_sparse_methods(self):
+        s = SparseGrid(default='.')
+        s[Coordinate(0,0)] = 'a'
+        s[Coordinate(10,10)] = 'b'
+        self.assertTrue(s.contains('a'))
+        self.assertFalse(s.contains('z'))
+        self.assertEqual(s.find_all('b'), [Coordinate(10,10)])
+        s.bulk_set([(Coordinate(5,5),'X')])
+        self.assertEqual(s.get(Coordinate(5,5)), 'X')
+        def lower(coord, val): return val.lower()
+        s.apply(lower)
+        self.assertEqual(s[Coordinate(0,0)], 'a')
+        self.assertEqual(s.get(Coordinate(1,1)), '.')
+
+class TestConversion(unittest.TestCase):
+    def test_to_sparse(self):
+        g = Grid.from_list_of_strings(["abc", "def"])
+        s = to_sparse(g)
+        self.assertEqual(s.get(Coordinate(0,0)), 'a')
+        self.assertEqual(s.get(Coordinate(1,2)), 'f')
+        self.assertEqual(s.get(Coordinate(10,10)), None)
+
+    def test_to_dense(self):
+        s = SparseGrid(default='X')
+        s[Coordinate(0,0)] = 'a'
+        s[Coordinate(2,3)] = 'b'
+        dense = to_dense(s, Coordinate(0,0), Coordinate(2,3))
+        self.assertEqual(dense[Coordinate(0,0)], 'a')
+        self.assertEqual(dense[Coordinate(2,3)], 'b')
+        self.assertEqual(dense[Coordinate(1,1)], 'X')
 
 if __name__ == '__main__':
     unittest.main()
