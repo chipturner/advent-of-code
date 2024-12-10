@@ -396,6 +396,13 @@ class GridBase(ABC):
             if self.in_bounds(n):
                 yield n
 
+    def neighbors4(self, pos: Coordinate) -> Iterator[Coordinate]:
+        # Common implementation using directions and in_bounds
+        for d in (up, down, left, right):
+            n = pos + d
+            if self.in_bounds(n):
+                yield n
+
     def find_all(self, val: str) -> List[Coordinate]:
         return [coord for coord, cell in self.items() if cell == val]
 
@@ -469,6 +476,14 @@ class Grid(GridBase):
         if c < 0 or c >= self.ncols:
             raise IndexError("Column out of range")
         return [self.entries[r][c] for r in range(self.nrows)]
+
+    def walk_edges(self):
+        for r in range(self.nrows):
+            yield Coordinate(r, 0)
+            yield Coordinate(r, self.ncols - 1)
+        for c in range(self.ncols):
+            yield Coordinate(0, c)
+            yield Coordinate(self.nrows - 1, c)
 
 @dataclass
 class SparseGrid(GridBase):
