@@ -10,12 +10,12 @@ def walk_ascent(grid, pos):
     ch = grid[pos]
     if ch == '9':
         print('peak', pos)
-        return [pos]
+        return 1
 
-    ret = set()
+    ret = 0
     for n in grid.neighbors4(pos):
         if grid[n] == f'{int(ch) + 1}':
-            ret.update(walk_ascent(grid, n))
+            ret += walk_ascent(grid, n)
     return ret
 
 def main() -> None:
@@ -31,7 +31,7 @@ def main() -> None:
     for head in heads:
         nines = walk_ascent(grid, head)
         print(nines)
-        ret += len(nines)
+        ret += nines
     print(ret)
 
 main()
