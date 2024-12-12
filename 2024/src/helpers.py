@@ -418,11 +418,6 @@ class GridBase(ABC):
         for coord, val in list(self.items()):
             self[coord] = func(coord, val)
 
-    def print(self):
-        # Default printing just prints items in no specific layout
-        for coord, val in self.items():
-            print(f"{coord}: {val}")
-
 @dataclass
 class Grid(GridBase):
     nrows: int = 0
@@ -436,6 +431,14 @@ class Grid(GridBase):
         g.nrows = len(g.entries)
         g.ncols = len(g.entries[0]) if g.nrows > 0 else 0
         return g
+
+    @classmethod
+    def from_empty(cls, nrows, ncols, ch) -> 'Grid':
+        ret = cls()
+        ret.nrows = nrows
+        ret.ncols = ncols
+        ret.entries = [list('.' * (ret.ncols)) for _ in range(ret.nrows)]
+        return ret
 
     def __getitem__(self, idx):
         if isinstance(idx, Coordinate):
@@ -455,6 +458,13 @@ class Grid(GridBase):
             raise IndexError("Index out of bounds")
         self.entries[r][c] = val
 
+    def pad(self, ch):
+        ret = Grid.from_empty(self.nrows + 2, self.ncols + 2, ',')
+        for r in range(self.nrows):
+            for c in range(self.ncols):
+                ret[(r + 1, c + 1)] = self[(r, c)]
+        return ret
+
     def in_bounds(self, coord: Coordinate) -> bool:
         return 0 <= coord.row < self.nrows and 0 <= coord.col < self.ncols
 
@@ -462,6 +472,18 @@ class Grid(GridBase):
         for r in range(self.nrows):
             for c in range(self.ncols):
                 yield Coordinate(r, c), self.entries[r][c]
+
+    def floodfill(self, pos: Coordinate) -> Iterator[Tuple[Coordinate, str]]:
+        seen = {pos}
+        todo = [pos]
+        while todo:
+            cur = todo.pop()
+            yield cur, self[cur]
+            for n in self.neighbors4(cur):
+                ch = self[n]
+                if n not in seen and ch == self[cur]:
+                    todo.append(n)
+                    seen.add(n)
 
     def print(self):
         print('\n'.join(''.join(row) for row in self.entries))
@@ -510,6 +532,16 @@ class SparseGrid(GridBase):
             r, c = idx
         self.cells[(r, c)] = val
 
+    def bounding_box(self) -> Tuple[Tuple[int, int]]:
+        min_row, min_col = sys.maxsize, sys.maxsize
+        max_row, max_col = -sys.maxsize, -sys.maxsize
+        for c, _ in self.items():
+            min_row = min(min_row, c.row)
+            min_col = min(min_col, c.col)
+            max_row = max(max_row, c.row)
+            max_col = max(max_col, c.col)
+        return (min_row, min_col), (max_row, max_col)
+
     def in_bounds(self, coord: Coordinate) -> bool:
         # For sparse, infinite space assumed, always True
         return True
@@ -517,6 +549,13 @@ class SparseGrid(GridBase):
     def items(self) -> Iterator[Tuple[Coordinate, str]]:
         for (r,c), val in self.cells.items():
             yield Coordinate(r,c), val
+
+    def print(self):
+        p0, p1 = self.bounding_box()
+        for r in range(p0[0], p1[0] + 1):
+            for c in range(p0[1], p1[1] + 1):
+                print(self[(r, c)], end='')
+            print()
 
 def to_sparse(grid: Grid) -> SparseGrid:
     sg = SparseGrid()
