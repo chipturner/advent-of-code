@@ -45,27 +45,27 @@ def main() -> None:
     else:
         wide, tall = 101, 103
 
-    grid_bots = collections.defaultdict(int)
-    for r in robots:
-        r.x = (r.x + 100 * r.vx) % wide
-        r.y = (r.y + 100 * r.vy) % tall
-        q = quadrant(r, wide, tall)
-        if q is not None:
-            print('assign', r.x, r.y, q)
-            grid_bots[q] += 1
-        else:
-            print('discard', r.x, r.y)
-    print(grid_bots)
+    t = 0
+    while True:
+        t += 1
+        grid_bots = collections.defaultdict(int)
+        for r in robots:
+            r.x = (r.x + 1 * r.vx) % wide
+            r.y = (r.y + 1 * r.vy) % tall
+            q = quadrant(r, wide, tall)
+            if q is not None:
+                grid_bots[q] += 1
 
-    g = helpers.Grid.from_empty(tall, wide, '.')
-    for idx, robot in enumerate(robots):
-        g[(robot.y, robot.x)] = 'R'
-    g.print()
+        if grid_bots[1] != grid_bots[2] or grid_bots[3] != grid_bots[4]:
+            pass
 
-    v = 1
-    for q, n in grid_bots.items():
-        v *= n
-    print(v)
-        
+        print(grid_bots)
+        print('time', t)
+        g = helpers.Grid.from_empty(tall, wide, '.')
+        for idx, robot in enumerate(robots):
+            g[(robot.y, robot.x)] = '*'
+        g.print()
+
+
 
 main()
